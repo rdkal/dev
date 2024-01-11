@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 )
@@ -13,6 +14,7 @@ import (
 var (
 	FlagUserServerURL = flag.String("forward-to-url", "http://localhost:8080", "forwards request to the given url")
 	FlagPort          = flag.Int("port", 8081, "port of the dev server")
+	FlagExcludeGlobs  = flag.String("exclude", ".git,*_test.go,*_templ.go", "comma seprated globs that if match mutes the reload")
 )
 
 func main() {
@@ -31,6 +33,7 @@ Usage:
 
 	runtime.DevServerAddr = fmt.Sprintf(":%d", *FlagPort)
 	runtime.UserServerURL = *FlagUserServerURL
+	runtime.Watcher.ExcludeGlobs = strings.Split(*FlagExcludeGlobs, ",")
 	runtime.Command = []string{"go", "run", "."}
 	if args := flag.Args(); len(args) > 0 {
 		runtime.Command = args
