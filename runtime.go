@@ -11,7 +11,7 @@ import (
 )
 
 type Runtime struct {
-	Port          string
+	DevServerAddr string
 	UserServerURL string
 	Command       []string
 	Watcher       *Watcher
@@ -39,7 +39,7 @@ func NewRuntime() (*Runtime, error) {
 	}
 
 	return &Runtime{
-		Port:          ":8081",
+		DevServerAddr: ":8081",
 		UserServerURL: "http://localhost:8080",
 		Watcher:       watcher,
 		Command:       []string{"go", "run", "."},
@@ -84,7 +84,7 @@ func (r *Runtime) notify(msg ...any) {
 }
 
 func (r *Runtime) server(ctx context.Context) error {
-	fmt.Println("dev-server listening on", r.Port)
+	fmt.Println("dev-server listening on", r.DevServerAddr)
 	proxy, err := NewProxy(r.UserServerURL)
 	exitOnError(err)
 	proxy.Inject = `
@@ -127,7 +127,7 @@ func (r *Runtime) server(ctx context.Context) error {
 	// nooplog := log.New(io.Discard, "", 0)
 	server := http.Server{
 		// ErrorLog: nooplog,
-		Addr: r.Port,
+		Addr: r.DevServerAddr,
 		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if r.URL.Path == "/__dev-server__" {
 				w.Header().Set("Content-Type", "text/event-stream")
