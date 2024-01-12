@@ -2,42 +2,48 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 	"time"
 )
 
-var (
-	FlagUserServerURL = flag.String("forward-to-url", "http://localhost:8080", "forwards request to the given url")
-	FlagPort          = flag.Int("port", 8081, "port of the dev server")
-	FlagExcludeGlobs  = flag.String("exclude", ".git,*_test.go,*_templ.go", "comma seprated globs that if match mutes the reload")
-)
-
 func main() {
+	cfg, err := GetConfig()
+	exitOnError(err)
+
 	flag.CommandLine.Usage = func() {
 		printLn(`Dev helps ya do go development stuff
-		
+
 Usage:
 
-  dev [OPTION]... [CMD] [ARG]...
+  dev [OPTION] <command>
+
+Commands:
+  init		create .dev.toml with default settings in current directory 
 `)
 		flag.CommandLine.PrintDefaults()
 	}
 	flag.Parse()
+	switch flag.Arg(0) {
+	case "init":
+		err := InitConifg()
+		exitOnError(err)
+		printLn(".dev.toml created with default settings")
+		return
+	default:
+	}
+
 	runtime, err := NewRuntime()
 	exitOnError(err)
 
-	runtime.DevServerAddr = fmt.Sprintf(":%d", *FlagPort)
-	runtime.UserServerURL = *FlagUserServerURL
-	runtime.Watcher.ExcludeGlobs = strings.Split(*FlagExcludeGlobs, ",")
-	runtime.Command = []string{"go", "run", "."}
-	if args := flag.Args(); len(args) > 0 {
-		runtime.Command = args
-	}
+	runtime.DevServerAddr = fmt.Sprintf(":%d", cfg.DevServerPort)
+	runtime.UserServerURL = cfg.FowardToURL
+	runtime.Watcher.ExcludeGlobs = cfg.ExcludeGlobs
+	runtime.Command = cfg.Command
 	printLn("cmd:", runtime.Command)
 
 	ctx, _ := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
@@ -49,6 +55,12 @@ Usage:
 	exitOnError(runtime.Run(ctx))
 }
 
+func check(err error) {
+	if err != nil {
+		panic(err)
+	}
+}
+
 func printLn(a ...any) {
 	fmt.Fprintln(os.Stderr, a...)
 }
@@ -58,4 +70,11 @@ func exitOnError(err error) {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
+}
+
+func printJSON(v any) {
+	b, err := json.MarshalIndent(v, "", "  ")
+	check(err)
+	fmt.Println(string(b))
+
 }
