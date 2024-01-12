@@ -10,7 +10,7 @@ import (
 
 type Watcher struct {
 	Dir          string
-	ExcludeGlobs []string
+	ExcludeFiles []string
 
 	watcher *fsnotify.Watcher
 	out     chan fsnotify.Event
@@ -65,12 +65,8 @@ func (w *Watcher) Events() <-chan fsnotify.Event {
 }
 
 func (w *Watcher) shouldMute(event fsnotify.Event) (bool, error) {
-	for _, glob := range w.ExcludeGlobs {
-		rel, err := filepath.Rel(w.Dir, event.Name)
-		if err != nil {
-			return false, err
-		}
-		match, err := filepath.Match(glob, rel)
+	for _, glob := range w.ExcludeFiles {
+		match, err := filepath.Match(glob, filepath.Base(event.Name))
 		if err != nil {
 			return false, err
 		}

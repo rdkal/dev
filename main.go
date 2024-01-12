@@ -42,7 +42,7 @@ Commands:
 
 	runtime.DevServerAddr = fmt.Sprintf(":%d", cfg.DevServerPort)
 	runtime.UserServerURL = cfg.FowardToURL
-	runtime.Watcher.ExcludeGlobs = cfg.ExcludeGlobs
+	runtime.Watcher.ExcludeFiles = cfg.ExcludeFiles
 	runtime.Command = cfg.Command
 	printLn("cmd:", runtime.Command)
 
