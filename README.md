@@ -29,4 +29,5 @@ Todo
 [ ] - refactor out server out of runtimepolling
 [ ] - change to websocket so we can control restarts better
 [ ] - add backoff and timeout when 
+[ ] - add custom exec that user can provide in config
 ```

@@ -17,6 +17,7 @@ type ConfigExec struct {
 
 type ConfigWatcher struct {
 	ExcludeFiles []string `toml:"exclude_file"`
+	ExcludeDirs  []string `toml:"exclude_dirs"`
 }
 
 type ConfigServer struct {
@@ -36,7 +37,8 @@ func DefaultConfig() *Config {
 			Command: []string{"go", "run", "."},
 		},
 		ConfigWatcher: ConfigWatcher{
-			ExcludeFiles: []string{"*_test.go", "*_templ.go", ".git", ConfigName},
+			ExcludeFiles: []string{"*_test.go", "*_templ.go", ConfigName},
+			ExcludeDirs:  []string{".git"},
 		},
 		ConfigServer: ConfigServer{
 			DevServerPort: 8081,

@@ -11,6 +11,7 @@ import (
 type Watcher struct {
 	Dir          string
 	ExcludeFiles []string
+	ExcludeDirs  []string
 
 	watcher *fsnotify.Watcher
 	out     chan fsnotify.Event
@@ -94,6 +95,15 @@ func (w *Watcher) watchIfDirectory(ctx context.Context, event fsnotify.Event) er
 func (w *Watcher) watch(ctx context.Context, dir string) error {
 	if ctx.Err() != nil {
 		return ctx.Err()
+	}
+	for _, pattern := range w.ExcludeDirs {
+		match, err := filepath.Match(pattern, filepath.Base(dir))
+		if err != nil {
+			return err
+		}
+		if match {
+			return nil
+		}
 	}
 	err := w.watcher.Add(dir)
 	if err != nil {
