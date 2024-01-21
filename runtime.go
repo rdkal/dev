@@ -98,9 +98,6 @@ func (r *Runtime) server(ctx context.Context) error {
 			window.location.reload()
 		}
   	</script>`
-	proxy.Do = func(req *http.Request) (*http.Response, error) {
-		return http.DefaultClient.Do(req)
-	}
 
 	listeners := []func() (stop bool){}
 	subscribe := make(chan func() bool)

@@ -30,4 +30,9 @@ Todo
 [ ] - change to websocket so we can control restarts better
 [ ] - add backoff and timeout when 
 [ ] - add custom exec that user can provide in config
+[x] - can't use redirect SeeOther though proxy
+[ ] - also inject on text/plain and change it to html?
+[ ] -  project scaffolding?
+[ ] - `$ dev deploy`
+[ ] - `$ dev crawl diff HEAD~ HEAD`
 ```

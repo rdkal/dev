@@ -15,10 +15,11 @@ type Proxy struct {
 	URL          *url.URL
 	ShouldInject func(resp *http.Response) bool
 	Inject       string
-	Do           func(req *http.Request) (*http.Response, error)
 	ShouldRetry  func(req *http.Request) bool
 	RetryDelay   time.Duration
 	ErrorHandler func(w http.ResponseWriter, r *http.Request, err error)
+
+	client http.Client
 }
 
 func NewProxy(dst string) (*Proxy, error) {
@@ -28,7 +29,6 @@ func NewProxy(dst string) (*Proxy, error) {
 	}
 	return &Proxy{
 		URL: u,
-		Do:  http.DefaultClient.Do,
 		ShouldInject: func(resp *http.Response) bool {
 			mediaType, _, _ := mime.ParseMediaType(resp.Header.Get("Content-Type"))
 			return resp.Request.Header.Get("Sec-Fetch-Dest") == "document" &&
@@ -41,17 +41,22 @@ func NewProxy(dst string) (*Proxy, error) {
 		ErrorHandler: func(w http.ResponseWriter, r *http.Request, err error) {
 			log.Println(err)
 		},
+		client: http.Client{
+			CheckRedirect: func(req *http.Request, via []*http.Request) error {
+				return http.ErrUseLastResponse
+			},
+		},
 	}, nil
 }
 
 func (p *Proxy) ServeHTTP(w http.ResponseWriter, src *http.Request) {
 	req := p.request(src)
-	resp, err := p.Do(req)
+	resp, err := p.client.Do(req)
 	count := 0
 	for err != nil && p.ShouldRetry(req) {
 		count++
 		time.Sleep(p.RetryDelay)
-		resp, err = p.Do(req)
+		resp, err = p.client.Do(req)
 	}
 	if err != nil {
 		p.ErrorHandler(w, req, err)
