@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -32,8 +33,12 @@ func NewWatcher(dir string) (*Watcher, error) {
 }
 
 func (w *Watcher) Start(ctx context.Context) error {
+	err := w.validateOptions()
+	if err != nil {
+		return err
+	}
 	defer w.watcher.Close()
-	err := w.watch(ctx, w.Dir)
+	err = w.watch(ctx, w.Dir)
 	if err != nil {
 		return err
 	}
@@ -70,6 +75,28 @@ func (w *Watcher) Events() <-chan fsnotify.Event {
 	return w.out
 }
 
+func (w *Watcher) validateOptions() error {
+	for _, pattern := range w.ExcludeDirs {
+		_, err := filepath.Match(pattern, "")
+		if err != nil {
+			return err
+		}
+		if filepath.IsAbs(pattern) {
+			return fmt.Errorf("exclude dir %q must be relative", pattern)
+		}
+	}
+	for _, pattern := range w.ExcludeFiles {
+		_, err := filepath.Match(pattern, "")
+		if err != nil {
+			return err
+		}
+		if filepath.Dir(pattern) != "." {
+			return fmt.Errorf("exclude file %q must be a file name without a directory: %s", pattern, filepath.Dir(pattern))
+		}
+	}
+	return nil
+}
+
 func (w *Watcher) shouldMute(event fsnotify.Event) (bool, error) {
 	for _, glob := range w.ExcludeFiles {
 		match, err := filepath.Match(glob, filepath.Base(event.Name))
@@ -101,16 +128,23 @@ func (w *Watcher) watch(ctx context.Context, dir string) error {
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
+	reldir, err := filepath.Rel(w.Dir, dir)
+	if err != nil {
+		return err
+	}
 	for _, pattern := range w.ExcludeDirs {
-		match, err := filepath.Match(pattern, filepath.Base(dir))
+		match, err := filepath.Match(pattern, reldir)
 		if err != nil {
 			return err
+		}
+		if w.Debug {
+			fmt.Fprintln(os.Stderr, "dir", reldir, "pattern:", pattern, "match:", match)
 		}
 		if match {
 			return nil
 		}
 	}
-	err := w.watcher.Add(dir)
+	err = w.watcher.Add(dir)
 	if err != nil {
 		return err
 	}
