@@ -45,6 +45,7 @@ Commands:
 	runtime.Watcher.ExcludeFiles = cfg.ExcludeFiles
 	runtime.Watcher.ExcludeDirs = cfg.ExcludeDirs
 	runtime.Command = cfg.Command
+	runtime.Watcher.Debug = cfg.Debug
 	printLn("cmd:", runtime.Command)
 
 	ctx, _ := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)

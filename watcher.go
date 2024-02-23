@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"log"
 	"os"
 	"path/filepath"
 
@@ -12,6 +13,7 @@ type Watcher struct {
 	Dir          string
 	ExcludeFiles []string
 	ExcludeDirs  []string
+	Debug        bool
 
 	watcher *fsnotify.Watcher
 	out     chan fsnotify.Event
@@ -53,6 +55,9 @@ func (w *Watcher) Start(ctx context.Context) error {
 			}
 			if shouldMute {
 				continue
+			}
+			if w.Debug {
+				log.Println(event)
 			}
 			w.out <- event
 		case err := <-w.watcher.Errors:

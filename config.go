@@ -26,6 +26,7 @@ type ConfigServer struct {
 }
 
 type Config struct {
+	Debug         bool `toml:"debug"`
 	ConfigExec    `toml:"exec"`
 	ConfigWatcher `toml:"watcher"`
 	ConfigServer  `toml:"server"`
