@@ -18,6 +18,7 @@ type ConfigExec struct {
 type ConfigWatcher struct {
 	ExcludeFiles []string `toml:"exclude_file"`
 	ExcludeDirs  []string `toml:"exclude_dirs"`
+	IncludeFiles []string `toml:"include_file"`
 }
 
 type ConfigServer struct {

@@ -44,6 +44,7 @@ Commands:
 	runtime.UserServerURL = cfg.FowardToURL
 	runtime.Watcher.ExcludeFiles = cfg.ExcludeFiles
 	runtime.Watcher.ExcludeDirs = cfg.ExcludeDirs
+	runtime.Watcher.IncludeFiles = cfg.IncludeFiles
 	runtime.Command = cfg.Command
 	runtime.Watcher.Debug = cfg.Debug
 	printLn("cmd:", runtime.Command)

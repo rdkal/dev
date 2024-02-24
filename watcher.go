@@ -14,6 +14,7 @@ type Watcher struct {
 	Dir          string
 	ExcludeFiles []string
 	ExcludeDirs  []string
+	IncludeFiles []string
 	Debug        bool
 
 	watcher *fsnotify.Watcher
@@ -54,15 +55,31 @@ func (w *Watcher) Start(ctx context.Context) error {
 					return err
 				}
 			}
-			shouldMute, err := w.shouldMute(event)
+			if w.Debug {
+				log.Println("event", event)
+			}
+			match, err := w.shouldExcludeFile(event)
 			if err != nil {
 				return err
 			}
-			if shouldMute {
+			if match {
+				if w.Debug {
+					log.Println("excluded", event)
+				}
+				continue
+			}
+			match, err = w.shouldIncludeFile(event)
+			if err != nil {
+				return err
+			}
+			if !match {
+				if w.Debug {
+					log.Println("not included", event)
+				}
 				continue
 			}
 			if w.Debug {
-				log.Println(event)
+				log.Println("send", event)
 			}
 			w.out <- event
 		case err := <-w.watcher.Errors:
@@ -85,7 +102,19 @@ func (w *Watcher) validateOptions() error {
 			return fmt.Errorf("exclude dir %q must be relative", pattern)
 		}
 	}
-	for _, pattern := range w.ExcludeFiles {
+	err := validateFilePattern(w.ExcludeFiles...)
+	if err != nil {
+		return err
+	}
+	err = validateFilePattern(w.IncludeFiles...)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func validateFilePattern(patterns ...string) error {
+	for _, pattern := range patterns {
 		_, err := filepath.Match(pattern, "")
 		if err != nil {
 			return err
@@ -97,8 +126,24 @@ func (w *Watcher) validateOptions() error {
 	return nil
 }
 
-func (w *Watcher) shouldMute(event fsnotify.Event) (bool, error) {
+func (w *Watcher) shouldExcludeFile(event fsnotify.Event) (bool, error) {
 	for _, glob := range w.ExcludeFiles {
+		match, err := filepath.Match(glob, filepath.Base(event.Name))
+		if err != nil {
+			return false, err
+		}
+		if match {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+func (w *Watcher) shouldIncludeFile(event fsnotify.Event) (bool, error) {
+	if len(w.IncludeFiles) == 0 {
+		return true, nil
+	}
+	for _, glob := range w.IncludeFiles {
 		match, err := filepath.Match(glob, filepath.Base(event.Name))
 		if err != nil {
 			return false, err

@@ -35,4 +35,5 @@ Todo
 [ ] -  project scaffolding?
 [ ] - `$ dev deploy`
 [ ] - `$ dev crawl diff HEAD~ HEAD`
+[ ] - add background jobs where one can specify vairous commands that run in the background with prefixed colored logs
 ```
